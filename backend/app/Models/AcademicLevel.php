@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class AcademicLevel extends Model
 {
-    //
+    protected $fillable = ['name', 'type', 'sort_order'];
 }
