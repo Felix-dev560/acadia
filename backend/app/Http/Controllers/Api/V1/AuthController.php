@@ -15,32 +15,37 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = User::create([
             'public_id' => Str::uuid(),
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'status' => 'active',
+            'name'      => $validated['name'],
+            'email'     => $validated['email'],
+            'password'  => Hash::make($validated['password']),
+            'status'    => 'active',
         ]);
 
+        // Create empty profile for the user
+        $user->profile()->create([]);
+
         Auth::login($user);
+
+        $user->load('profile');
 
         return response()->json([
             'success' => true,
             'message' => 'Registration successful',
-            'data' => ['user' => $user]
+            'data'    => ['user' => $user]
         ], 201);
     }
 
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -52,10 +57,18 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user()->load([
+            'profile.country',
+            'profile.institution',
+            'profile.faculty',
+            'profile.department',
+            'profile.academicLevel'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => ['user' => Auth::user()]
+            'data'    => ['user' => $user]
         ]);
     }
 
@@ -73,10 +86,18 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
+        $user = $request->user()->load([
+            'profile.country',
+            'profile.institution',
+            'profile.faculty',
+            'profile.department',
+            'profile.academicLevel'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'User retrieved',
-            'data' => ['user' => $request->user()]
+            'data'    => ['user' => $user]
         ]);
     }
 }
