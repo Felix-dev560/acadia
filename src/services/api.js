@@ -4,11 +4,29 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // required for Laravel Sanctum SPA auth
+  withCredentials: true, // send cookies (session + XSRF)
+  withXSRFToken: true,   // axios 1.6+ auto-attaches X-XSRF-TOKEN from cookie
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+})
+
+// Fallback: manually attach XSRF token if cookie exists (cross-origin safety)
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+api.interceptors.request.use((config) => {
+  const token = getCookie('XSRF-TOKEN')
+  if (token && !config.headers['X-XSRF-TOKEN']) {
+    config.headers['X-XSRF-TOKEN'] = token
+  }
+  return config
 })
 
 // Get CSRF cookie before any state-changing request
