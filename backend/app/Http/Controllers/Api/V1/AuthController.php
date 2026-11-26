@@ -30,6 +30,15 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        // Load nested profile data
+        $user->load([
+            'profile.country', 
+            'profile.institution', 
+            'profile.faculty', 
+            'profile.department', 
+            'profile.academicLevel'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Registration successful',
@@ -52,10 +61,19 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        // Load nested profile data
+        $user = Auth::user()->load([
+            'profile.country', 
+            'profile.institution', 
+            'profile.faculty', 
+            'profile.department', 
+            'profile.academicLevel'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => ['user' => Auth::user()]
+            'data' => ['user' => $user]
         ]);
     }
 
@@ -73,10 +91,19 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
+        // Load nested profile data
+        $user = $request->user()->load([
+            'profile.country', 
+            'profile.institution', 
+            'profile.faculty', 
+            'profile.department', 
+            'profile.academicLevel'
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'User retrieved',
-            'data' => ['user' => $request->user()]
+            'data' => ['user' => $user]
         ]);
     }
 }
