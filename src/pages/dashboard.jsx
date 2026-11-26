@@ -9,6 +9,7 @@ import {
   getAcademicLevels,
   updateProfile,
 } from '../services/api'
+import '../styles/dashboard.css'
 
 export default function Dashboard() {
   const { user, setUser, logout } = useAuth()
@@ -60,10 +61,7 @@ export default function Dashboard() {
         department_id: user.profile.department_id || '',
         academic_level_id: user.profile.academic_level_id || '',
       })
-      // auto-open form if profile is incomplete
-      if (!user.profile.institution_id) {
-        setShowProfileForm(true)
-      }
+      if (!user.profile.institution_id) setShowProfileForm(true)
     }
   }, [user])
 
@@ -95,9 +93,7 @@ export default function Dashboard() {
         next.faculty_id = ''
         next.department_id = ''
       }
-      if (name === 'faculty_id') {
-        next.department_id = ''
-      }
+      if (name === 'faculty_id') next.department_id = ''
       return next
     })
     setMessage('')
@@ -109,7 +105,6 @@ export default function Dashboard() {
     setSaving(true)
     setMessage('')
     setError('')
-
     try {
       const payload = {
         country_id: form.country_id || null,
@@ -120,10 +115,7 @@ export default function Dashboard() {
       }
       const res = await updateProfile(payload)
       if (res.success) {
-        setUser((prev) => ({
-          ...prev,
-          profile: res.data.profile,
-        }))
+        setUser((prev) => ({ ...prev, profile: res.data.profile }))
         setMessage('Profile saved successfully')
         setShowProfileForm(false)
       }
@@ -142,180 +134,209 @@ export default function Dashboard() {
   const profile = user?.profile
   const hasInstitution = !!profile?.institution_id
   const firstName = user?.name?.split(' ')[0] || 'Student'
+  const initials = (user?.name || 'S')
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-primary-800 text-lg">Acadia</span>
-            <span className="hidden sm:inline text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-              Student
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 hidden sm:inline">{user?.name}</span>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-1.5 rounded-lg hover:bg-red-50 transition"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* Welcome */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            Welcome back, {firstName}
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">{user?.email}</p>
-        </div>
-
-        {/* Profile incomplete banner */}
-        {!hasInstitution && (
-          <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-sm font-medium text-amber-800">Complete your academic profile</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Select your institution and department so we can show relevant materials.
-              </p>
+    <div className="dash-body">
+      <div className="dash-shell">
+        {/* Top bar */}
+        <div className="dash-topwrap">
+          <div className="dash-top">
+            <div className="dash-brand">
+              <div className="dash-mark">A</div>
+              <div>
+                <b>Acadia</b>
+                <small>Student Dashboard</small>
+              </div>
             </div>
-            <button
-              onClick={() => setShowProfileForm(true)}
-              className="text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition whitespace-nowrap"
-            >
+            <div className="dash-tools">
+              <span className="dash-avatar" title={user?.name}>{initials}</span>
+              <button className="dash-btn danger" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Welcome */}
+        <div className="dash-welcome">
+          <h1>Welcome back, {firstName}</h1>
+          <p>{user?.email}</p>
+        </div>
+
+        {/* Incomplete profile banner */}
+        {!hasInstitution && (
+          <div className="dash-banner">
+            <p>
+              Complete your academic profile
+              <span>Select your institution and department to unlock relevant materials.</span>
+            </p>
+            <button type="button" onClick={() => setShowProfileForm(true)}>
               Complete now
             </button>
           </div>
         )}
 
-        {/* Stats cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Downloads" value="0" sub="This semester" />
-          <StatCard label="Uploads" value="0" sub="Materials shared" />
-          <StatCard label="Bookmarks" value="0" sub="Saved resources" />
-          <StatCard label="Requests" value="0" sub="Open requests" />
+        {/* KPI cards */}
+        <div className="dash-kpis">
+          <div className="dash-card dash-kpi">
+            <div className="t">
+              <span>Downloads</span>
+              <span className="ico g">↓</span>
+            </div>
+            <div className="big">0</div>
+            <div className="f">This semester</div>
+          </div>
+          <div className="dash-card dash-kpi">
+            <div className="t">
+              <span>Uploads</span>
+              <span className="ico b">↑</span>
+            </div>
+            <div className="big">0</div>
+            <div className="f">Materials shared</div>
+          </div>
+          <div className="dash-card dash-kpi">
+            <div className="t">
+              <span>Bookmarks</span>
+              <span className="ico a">★</span>
+            </div>
+            <div className="big">0</div>
+            <div className="f">Saved resources</div>
+          </div>
+          <div className="dash-card dash-kpi">
+            <div className="t">
+              <span>Requests</span>
+              <span className="ico r">?</span>
+            </div>
+            <div className="big">0</div>
+            <div className="f">Open requests</div>
+          </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left column - Profile + form */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Academic profile card */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-slate-800">Academic profile</h2>
+        {/* Main grid */}
+        <div className="dash-grid">
+          {/* Left */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Academic profile */}
+            <div className="dash-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <h3 style={{ margin: 0 }}>Academic profile</h3>
                 <button
+                  className="dash-btn"
+                  type="button"
                   onClick={() => setShowProfileForm(!showProfileForm)}
-                  className="text-sm text-primary-700 hover:text-primary-800 font-medium"
                 >
                   {showProfileForm ? 'Cancel' : 'Edit'}
                 </button>
               </div>
 
               {!showProfileForm ? (
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <InfoRow label="Institution" value={profile?.institution?.name} />
-                  <InfoRow label="Faculty" value={profile?.faculty?.name} />
-                  <InfoRow label="Department" value={profile?.department?.name} />
-                  <InfoRow label="Level" value={profile?.academic_level?.name} />
-                  <InfoRow label="Country" value={profile?.country?.name} />
+                <div className="dash-info">
+                  <div>
+                    <span>Institution</span>
+                    <b>{profile?.institution?.name || '—'}</b>
+                  </div>
+                  <div>
+                    <span>Faculty</span>
+                    <b>{profile?.faculty?.name || '—'}</b>
+                  </div>
+                  <div>
+                    <span>Department</span>
+                    <b>{profile?.department?.name || '—'}</b>
+                  </div>
+                  <div>
+                    <span>Level</span>
+                    <b>{profile?.academic_level?.name || '—'}</b>
+                  </div>
+                  <div>
+                    <span>Country</span>
+                    <b>{profile?.country?.name || '—'}</b>
+                  </div>
                 </div>
               ) : (
-                <form onSubmit={handleSaveProfile} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <SelectField
-                      label="Country"
-                      name="country_id"
-                      value={form.country_id}
-                      onChange={handleChange}
-                      options={countries}
-                    />
-                    <SelectField
-                      label="Institution"
-                      name="institution_id"
-                      value={form.institution_id}
-                      onChange={handleChange}
-                      options={institutions}
-                    />
-                    <SelectField
-                      label="Faculty"
-                      name="faculty_id"
-                      value={form.faculty_id}
-                      onChange={handleChange}
-                      options={faculties}
-                      disabled={!form.institution_id}
-                    />
-                    <SelectField
-                      label="Department"
-                      name="department_id"
-                      value={form.department_id}
-                      onChange={handleChange}
-                      options={departments}
-                      disabled={!form.faculty_id}
-                    />
-                    <SelectField
-                      label="Academic level"
-                      name="academic_level_id"
-                      value={form.academic_level_id}
-                      onChange={handleChange}
-                      options={levels}
-                    />
+                <form onSubmit={handleSaveProfile} className="dash-form">
+                  <SelectField
+                    label="Country"
+                    name="country_id"
+                    value={form.country_id}
+                    onChange={handleChange}
+                    options={countries}
+                  />
+                  <SelectField
+                    label="Institution"
+                    name="institution_id"
+                    value={form.institution_id}
+                    onChange={handleChange}
+                    options={institutions}
+                  />
+                  <SelectField
+                    label="Faculty"
+                    name="faculty_id"
+                    value={form.faculty_id}
+                    onChange={handleChange}
+                    options={faculties}
+                    disabled={!form.institution_id}
+                  />
+                  <SelectField
+                    label="Department"
+                    name="department_id"
+                    value={form.department_id}
+                    onChange={handleChange}
+                    options={departments}
+                    disabled={!form.faculty_id}
+                  />
+                  <SelectField
+                    label="Academic level"
+                    name="academic_level_id"
+                    value={form.academic_level_id}
+                    onChange={handleChange}
+                    options={levels}
+                  />
+
+                  <div className="dash-actions">
+                    <button type="submit" className="dash-pri" disabled={saving}>
+                      {saving ? 'Saving...' : 'Save profile'}
+                    </button>
+                    {message && <span className="dash-msg ok">{message}</span>}
+                    {error && <span className="dash-msg err">{error}</span>}
                   </div>
-
-                  {message && (
-                    <div className="rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm px-3 py-2">
-                      {message}
-                    </div>
-                  )}
-                  {error && (
-                    <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="rounded-lg bg-primary-700 hover:bg-primary-800 text-white font-medium px-5 py-2.5 text-sm transition disabled:opacity-60"
-                  >
-                    {saving ? 'Saving...' : 'Save profile'}
-                  </button>
                 </form>
               )}
             </div>
 
-            {/* Placeholder: Recent materials */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h2 className="font-semibold text-slate-800 mb-3">Recent materials</h2>
-              <div className="text-center py-10 text-slate-400 text-sm">
+            {/* Recent materials placeholder */}
+            <div className="dash-card">
+              <h3>Recent materials</h3>
+              <div className="dash-empty">
                 <p>No materials yet.</p>
-                <p className="mt-1">Past questions and handouts will appear here once available.</p>
+                <p>Past questions and handouts will appear here once available.</p>
               </div>
             </div>
           </div>
 
-          {/* Right column - Quick actions */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h2 className="font-semibold text-slate-800 mb-4">Quick actions</h2>
-              <div className="space-y-2">
-                <ActionButton label="Browse resources" disabled />
-                <ActionButton label="Upload material" disabled />
-                <ActionButton label="Request past question" disabled />
-                <ActionButton label="My bookmarks" disabled />
+          {/* Right */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="dash-card">
+              <h3>Quick actions</h3>
+              <div className="dash-qa">
+                <button type="button" disabled>Browse resources</button>
+                <button type="button" disabled>Upload material</button>
+                <button type="button" disabled>Request past question</button>
+                <button type="button" disabled>My bookmarks</button>
               </div>
-              <p className="text-xs text-slate-400 mt-4">
-                These features will unlock when the resource module is ready.
+              <p style={{ fontSize: 11, color: 'var(--mute)', marginTop: 12 }}>
+                These unlock when the resource module is ready.
               </p>
             </div>
 
-            <div className="bg-primary-50 rounded-xl border border-primary-100 p-5">
-              <h3 className="font-semibold text-primary-900 text-sm">Your community</h3>
-              <p className="text-xs text-primary-700 mt-1">
+            <div className="dash-community">
+              <h4>Your community</h4>
+              <p>
                 {hasInstitution
                   ? `Connected to ${profile?.department?.name || profile?.institution?.name || 'your department'}`
                   : 'Complete your profile to join your department community.'}
@@ -323,60 +344,21 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  )
-}
-
-/* ---------- small helper components ---------- */
-
-function StatCard({ label, value, sub }) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-      <p className="text-sm font-medium text-slate-700 mt-0.5">{label}</p>
-      <p className="text-xs text-slate-400 mt-1">{sub}</p>
-    </div>
-  )
-}
-
-function InfoRow({ label, value }) {
-  return (
-    <div>
-      <span className="text-slate-400 text-xs block">{label}</span>
-      <span className="font-medium text-slate-800">{value || '—'}</span>
+      </div>
     </div>
   )
 }
 
 function SelectField({ label, name, value, onChange, options = [], disabled = false }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100 disabled:text-slate-400"
-      >
+    <div className="dash-field">
+      <label>{label}</label>
+      <select name={name} value={value} onChange={onChange} disabled={disabled}>
         <option value="">Select {label.toLowerCase()}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>{o.name}</option>
         ))}
       </select>
     </div>
-  )
-}
-
-function ActionButton({ label, disabled }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 border border-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-    >
-      {label}
-    </button>
   )
 }
