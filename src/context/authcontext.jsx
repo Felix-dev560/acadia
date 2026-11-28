@@ -1,5 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout } from '../services/api'
+import {
+  getMe,
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  saveToken,
+  getToken,
+  clearToken,
+} from '../services/api'
 
 const AuthContext = createContext(null)
 
@@ -12,12 +20,22 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function checkAuth() {
+    const token = getToken()
+    if (!token) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
     try {
       const res = await getMe()
       if (res.success) {
         setUser(res.data.user)
+      } else {
+        clearToken()
+        setUser(null)
       }
     } catch {
+      clearToken()
       setUser(null)
     } finally {
       setLoading(false)
@@ -27,6 +45,7 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const res = await apiLogin({ email, password })
     if (res.success) {
+      saveToken(res.data.access_token)
       setUser(res.data.user)
     }
     return res
@@ -35,6 +54,7 @@ export function AuthProvider({ children }) {
   async function register(name, email, password, password_confirmation) {
     const res = await apiRegister({ name, email, password, password_confirmation })
     if (res.success) {
+      saveToken(res.data.access_token)
       setUser(res.data.user)
     }
     return res
@@ -43,7 +63,10 @@ export function AuthProvider({ children }) {
   async function logout() {
     try {
       await apiLogout()
+    } catch {
+      // ignore network errors on logout
     } finally {
+      clearToken()
       setUser(null)
     }
   }
