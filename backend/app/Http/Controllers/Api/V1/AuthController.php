@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
@@ -28,21 +27,16 @@ class AuthController extends Controller
             'status' => 'active',
         ]);
 
-        Auth::login($user);
-
-        // Load nested profile data
-        $user->load([
-            'profile.country', 
-            'profile.institution', 
-            'profile.faculty', 
-            'profile.department', 
-            'profile.academicLevel'
-        ]);
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Registration successful',
-            'data' => ['user' => $user]
+            'data' => [
+                'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]
         ], 201);
     }
 
@@ -53,16 +47,17 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        $request->session()->regenerate();
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Load nested profile data
-        $user = Auth::user()->load([
+        $user->load([
             'profile.country', 
             'profile.institution', 
             'profile.faculty', 
@@ -73,15 +68,17 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => ['user' => $user]
+            'data' => [
+                'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ]
         ]);
     }
 
     public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'success' => true,
@@ -91,7 +88,6 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        // Load nested profile data
         $user = $request->user()->load([
             'profile.country', 
             'profile.institution', 
